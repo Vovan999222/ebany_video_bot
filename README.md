@@ -108,4 +108,3 @@ python bot.py
 ## License
 
 This project is distributed under the [MIT License](https://raw.githubusercontent.com/Vovan999222/ebany_video_bot/refs/heads/main/LICENSE).
-```
