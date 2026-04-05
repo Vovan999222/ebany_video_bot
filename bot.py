@@ -88,7 +88,7 @@ async def cmd_start(message: types.Message):
     logger.info(f"[{user.id}] {name} начал использовать бота.")
     
     await message.answer(
-        "Привет! Я бот для скачивания из TikTok.\n"
+        "Привет! Я бот для скачивания из TikTok, YouTube или Instagram.\n"
         "Отправь мне ссылку, и я предложу скачать видео (файлом) или отдельно аудио!"
     )
 
