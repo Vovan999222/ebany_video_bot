@@ -74,7 +74,7 @@ source venv/bin/activate
 You can install the libraries manually:
 
 ```bash
-pip install aiogram yt-dlp
+pip install aiogram yt-dlp mutagen
 ```
 
 Or create a `requirements.txt` file and install via:
