@@ -8,6 +8,7 @@ from config import TOKEN
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import CommandStart
 from aiogram.types import FSInputFile, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import FSInputFile, URLInputFile, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramEntityTooLarge
 
@@ -54,9 +55,15 @@ def get_user_display_name(user: types.User):
         return f"@{user.username}"
     return user.first_name
 
+def get_cover_info(url: str):
+    """Извлекает прямую ссылку на обложку и название медиа"""
+    ydl_opts = {'quiet': True, 'no_warnings': True}
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        return info.get('thumbnail'), info.get('title', 'Cover')
+
 def download_media(url: str, mode: str) -> str:
     """Синхронная функция скачивания через yt-dlp (видео или аудио)"""
-    
     ydl_opts = {
         'outtmpl': '%(id)s.%(ext)s', 
         'quiet': True,
@@ -65,13 +72,20 @@ def download_media(url: str, mode: str) -> str:
 
     if mode == 'video':
         ydl_opts['format'] = 'bestvideo[ext=mp4][vcodec^=avc]+bestaudio[ext=m4a]/best[ext=mp4][vcodec^=avc]/best[ext=mp4]/best'
+        ydl_opts['merge_output_format'] = 'mp4'
     else:
         ydl_opts['format'] = 'bestaudio/best'
-        ydl_opts['postprocessors'] = [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '320',
-        }]
+        ydl_opts['writethumbnail'] = True
+        ydl_opts['postprocessors'] = [
+            {
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '320',
+            },
+            {
+                'key': 'EmbedThumbnail',
+            }
+        ]
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
@@ -88,24 +102,32 @@ async def cmd_start(message: types.Message):
     logger.info(f"[{user.id}] {name} начал использовать бота.")
     
     await message.answer(
-        "Привет! Я бот для скачивания из TikTok, YouTube или Instagram.\n"
-        "Отправь мне ссылку, и я предложу скачать видео (файлом) или отдельно аудио!"
+        "Привет! Я бот для скачивания медиа.\n"
+        "Отправь мне ссылку на YouTube, TikTok, Instagram или SoundCloud, и я предложу форматы для загрузки!"
     )
 
-@dp.message(F.text.regexp(r'(?i)https?://(?:[a-zA-Z0-9-]+\.)*(tiktok\.com|youtube\.com|youtu\.be|instagram\.com)/.*'))
+@dp.message(F.text.regexp(r'(?i)https?://(?:[a-zA-Z0-9-]+\.)*(tiktok\.com|youtube\.com|youtu\.be|instagram\.com|soundcloud\.com)/.*'))
 async def handle_media_link(message: types.Message, state: FSMContext):
     url = message.text
     user = message.from_user
     name = get_user_display_name(user)
     logger.info(f"[{user.id}] {name} прислал ссылку: {url}")
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📹 Скачать видео", callback_data='video')],
-        [InlineKeyboardButton(text="🎵 Скачать аудио", callback_data='audio')]
-    ])
+    
+    if 'soundcloud.com' in url.lower():
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🖼 Скачать обложку трека", callback_data='cover')],
+            [InlineKeyboardButton(text="🎵 Скачать трек", callback_data='audio')]
+        ])
+    else:
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="📹 Скачать видео", callback_data='video')],
+            [InlineKeyboardButton(text="🎵 Скачать аудио", callback_data='audio')]
+        ])
+
     await state.update_data(media_url=url)
     await message.answer("Что именно нужно скачать?", reply_markup=keyboard)
 
-@dp.callback_query(F.data.in_({"video", "audio"}))
+@dp.callback_query(F.data.in_({"video", "audio", "cover"}))
 async def button_callback(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
     
@@ -122,10 +144,29 @@ async def button_callback(callback: types.CallbackQuery, state: FSMContext):
         return
     await state.clear()
 
-    status_text = "⏳ Скачиваю видео..." if mode == 'video' else "⏳ Скачиваю аудио..."
-    await callback.message.edit_text(status_text)
+    status_text = {
+        'video': "⏳ Скачиваю видео...",
+        'audio': "⏳ Скачиваю аудио...",
+        'cover': "⏳ Получаю обложку..."
+    }.get(mode, "⏳ Обработка...")
+    
+    status_msg = await callback.message.edit_text(status_text)
 
     try:
+        if mode == 'cover':
+            cover_url, title = await asyncio.to_thread(get_cover_info, media_url)
+            if cover_url:
+                safe_title = re.sub(r'[\\/*?:"<>|]', "", title)
+                cover_doc = URLInputFile(url=cover_url, filename=f"{safe_title}.jpg")
+                await callback.message.answer_document(
+                    document=cover_doc,
+                    disable_content_type_detection=True
+                )
+            else:
+                await callback.message.answer("❌ Не удалось найти обложку для этой ссылки.")
+            await status_msg.delete()
+            return
+
         file_path = await asyncio.to_thread(download_media, media_url, mode)
         
         try:
@@ -141,9 +182,10 @@ async def button_callback(callback: types.CallbackQuery, state: FSMContext):
                     audio=audio
                 )
             logger.info(f"[{user.id}] {name} -> Успешно отправлен файл {mode}.")
+            await status_msg.delete()
 
         except TelegramEntityTooLarge:
-            await callback.message.answer("❌ Файл слишком большой! Telegram позволяет отправлять ботам файлы размером не более 50 МБ.")
+            await status_msg.edit_text("❌ Файл слишком большой! Telegram позволяет отправлять ботам файлы размером не более 50 МБ.")
             logger.warning(f"[{user.id}] {name} -> Файл превысил лимит в 50 МБ.")
         finally:
             if os.path.exists(file_path):
@@ -151,11 +193,11 @@ async def button_callback(callback: types.CallbackQuery, state: FSMContext):
 
     except Exception as e:
         logger.error(f"Error process_media [{mode}]: {e}")
-        await callback.message.answer("❌ Произошла ошибка. Возможно, видео скрыто приватностью, удалено или временно недоступно.")
+        await status_msg.edit_text("❌ Произошла ошибка. Возможно, видео/трек скрыто приватностью, удалено или временно недоступно.")
 
 @dp.message()
 async def handle_other_messages(message: types.Message):
-    await message.answer("Пожалуйста, отправьте корректную ссылку на TikTok, YouTube или Instagram.")
+    await message.answer("Пожалуйста, отправьте корректную ссылку на YouTube, TikTok, Instagram или SoundCloud.")
 
 async def main():
     print(f"Активный лог: {log_filename}")
