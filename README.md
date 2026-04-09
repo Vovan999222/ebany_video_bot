@@ -12,13 +12,16 @@ The bot automatically downloads videos in the best available quality, adapts the
 ## Features
 
 * **Multi-platform**:
-    * Supports links from **YouTube** (including Shorts), **TikTok**, and **Instagram** (Reels/Posts).
-    * Offers a choice: download as **Video** or **Audio**.
+    * Supports links from **YouTube** (including Shorts), **TikTok**, **Instagram** (Reels/Posts), and **SoundCloud**.
+    * Offers a choice: download as **Video** or **Audio**. (For SoundCloud, you can also download the **Cover Art**).
 * **Video Processing**:
     * Forced conversion and codec selection to **H.264 (MP4)** for seamless playback directly in the Telegram chat.
     * Supports video streaming (users can start watching before the file is fully downloaded to the cache).
-* **Audio Extraction**:
+    * Original quality preserved: videos are sent as uncompressed documents to avoid Telegram's built-in compression.
+* **Audio & Metadata Extraction**:
     * Converts audio tracks to **MP3** format (320kbps).
+    * Automatically embeds high-quality cover art directly into downloaded MP3 files.
+    * Extracts original track covers (thumbnails) and sends them as uncompressed files with dynamic, safe filenames.
 * **Logging**:
     * Maintains detailed logs with daily rotation in the `logs/` directory.
 * **Asynchronous**:
