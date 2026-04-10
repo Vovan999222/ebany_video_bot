@@ -7,7 +7,6 @@ import yt_dlp
 from config import TOKEN
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import CommandStart
-from aiogram.types import FSInputFile, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types import FSInputFile, URLInputFile, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramEntityTooLarge
@@ -112,7 +111,6 @@ async def handle_media_link(message: types.Message, state: FSMContext):
     user = message.from_user
     name = get_user_display_name(user)
     logger.info(f"[{user.id}] {name} прислал ссылку: {url}")
-    
     if 'soundcloud.com' in url.lower():
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🖼 Скачать обложку трека", callback_data='cover')],
@@ -121,24 +119,21 @@ async def handle_media_link(message: types.Message, state: FSMContext):
     else:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="📹 Скачать видео", callback_data='video')],
+            [InlineKeyboardButton(text="📁 Скачать видео без сжатия", callback_data='video_doc')],
             [InlineKeyboardButton(text="🎵 Скачать аудио", callback_data='audio')]
         ])
-
     await state.update_data(media_url=url)
     await message.answer("Что именно нужно скачать?", reply_markup=keyboard)
 
-@dp.callback_query(F.data.in_({"video", "audio", "cover"}))
+@dp.callback_query(F.data.in_({"video", "video_doc", "audio", "cover"}))
 async def button_callback(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
-    
     user = callback.from_user
     name = get_user_display_name(user)
     mode = callback.data
     logger.info(f"[{user.id}] {name} нажал кнопку: {mode}")
-
     data = await state.get_data()
     media_url = data.get('media_url')
-    
     if not media_url:
         await callback.message.edit_text("❌ Ссылка устарела. Отправьте её заново.")
         return
@@ -146,6 +141,7 @@ async def button_callback(callback: types.CallbackQuery, state: FSMContext):
 
     status_text = {
         'video': "⏳ Скачиваю видео...",
+        'video_doc': "⏳ Скачиваю видео (файлом)...",
         'audio': "⏳ Скачиваю аудио...",
         'cover': "⏳ Получаю обложку..."
     }.get(mode, "⏳ Обработка...")
@@ -167,19 +163,26 @@ async def button_callback(callback: types.CallbackQuery, state: FSMContext):
             await status_msg.delete()
             return
 
-        file_path = await asyncio.to_thread(download_media, media_url, mode)
-        
+        dl_mode = 'video' if mode in ('video', 'video_doc') else mode
+        file_path = await asyncio.to_thread(download_media, media_url, dl_mode)
+
         try:
             if mode == 'video':
-                document = FSInputFile(file_path)
+                video_file = FSInputFile(file_path)
+                await callback.message.answer_video(
+                    video=video_file,
+                    supports_streaming=True
+                )
+            elif mode == 'video_doc':
+                document_file = FSInputFile(file_path)
                 await callback.message.answer_document(
-                    document=document,
+                    document=document_file,
                     disable_content_type_detection=True
                 )
             elif mode == 'audio':
-                audio = FSInputFile(file_path)
+                audio_file = FSInputFile(file_path)
                 await callback.message.answer_audio(
-                    audio=audio
+                    audio=audio_file
                 )
             logger.info(f"[{user.id}] {name} -> Успешно отправлен файл {mode}.")
             await status_msg.delete()
@@ -193,7 +196,7 @@ async def button_callback(callback: types.CallbackQuery, state: FSMContext):
 
     except Exception as e:
         logger.error(f"Error process_media [{mode}]: {e}")
-        await status_msg.edit_text("❌ Произошла ошибка. Возможно, видео/трек скрыто приватностью, удалено или временно недоступно.")
+        await status_msg.edit_text("❌ Произошла ошибка. Возможно, публикация скрыта, удалена или временно недоступна.")
 
 @dp.message()
 async def handle_other_messages(message: types.Message):
