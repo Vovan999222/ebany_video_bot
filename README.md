@@ -7,25 +7,28 @@
 
 This Telegram bot is designed to easily download media files via links from popular social networks.
 
-The bot automatically downloads videos in the best available quality, adapts them for Telegram's native player, and can also extract audio tracks.
+The bot automatically downloads videos in the best available quality, adapts them for Telegram's native player, extracts audio tracks, and seamlessly handles TikTok photo.
 
 ## Features
 
 * **Multi-platform**:
     * Supports links from **YouTube** (including Shorts), **TikTok**, **Instagram** (Reels/Posts), and **SoundCloud**.
     * Offers a choice: download as **Video** or **Audio**. (For SoundCloud, you can also download the **Cover Art**).
+* **Smart TikTok Integration**:
+    * **Auto-detection**: Automatically detects if a TikTok link is a standard video or a Photo.
+    * **Photo Carousels**: Download TikTok photos as a native Telegram Album (compressed for quick viewing) or as uncompressed Document files (original quality).
+    * Bypasses captchas and extracts watermark-free media and original MP3 audio via the TikWM API.
 * **Video Processing**:
     * Forced conversion and codec selection to **H.264 (MP4)** for seamless playback directly in the Telegram chat.
     * Supports video streaming (users can start watching before the file is fully downloaded to the cache).
     * Original quality preserved: videos are sent as uncompressed documents to avoid Telegram's built-in compression.
 * **Audio & Metadata Extraction**:
     * Converts audio tracks to **MP3** format (320kbps).
-    * Automatically embeds high-quality cover art directly into downloaded MP3 files.
-    * Extracts original track covers (thumbnails) and sends them as uncompressed files with dynamic, safe filenames.
+    * Automatically embeds high-quality cover art directly into downloaded MP3 files using `yt-dlp` postprocessors.
 * **Logging**:
     * Maintains detailed logs with daily rotation in the `logs/` directory.
 * **Asynchronous**:
-    * Downloading files does not block the bot's operation for other users, thanks to `asyncio.to_thread`.
+    * Downloading files does not block the bot's operation for other users, thanks to `asyncio.to_thread` and `aiohttp`.
 
 ## Requirements
 
@@ -36,7 +39,10 @@ To run the bot, you need:
 
 ### Installing FFmpeg:
 
-* **Ubuntu/Debian**: `sudo apt update && sudo apt upgrade && sudo apt install ffmpeg`
+* **Ubuntu/Debian**:
+   ```
+   sudo apt update && sudo apt upgrade && sudo apt install ffmpeg
+   ```
 * **Windows**:
     * **Method 1 (Recommended):** Open a terminal (PowerShell or CMD) and run:
       ```cmd
@@ -48,7 +54,10 @@ To run the bot, you need:
       ```cmd
       C:\ffmpeg\bin
       ```
-* **MacOS**: `brew install ffmpeg`
+* **MacOS**:
+   ```
+   brew install ffmpeg
+   ```
 
 ## Installation & Usage
 
@@ -77,7 +86,7 @@ source venv/bin/activate
 You can install the libraries manually:
 
 ```bash
-pip install aiogram yt-dlp mutagen
+pip install aiogram yt-dlp Pillow aiohttp
 ```
 
 Or create a `requirements.txt` file and install via:
@@ -107,6 +116,7 @@ python bot.py
 * **Limits**: The bot processes and sends files up to **50 MB** (Telegram Bot API restriction).
 * **Video**: `yt-dlp` settings are forced to request `bestvideo[ext=mp4][vcodec^=avc]` format to exclude AV1/VP9 codecs, which are not supported by Telegram's in-app player.
 * **Audio**: Processed via `FFmpegExtractAudio` with the MP3 codec.
+* **TikTok Parsing**: Uses `aiohttp` to communicate with the TikWM API for fast, captcha-free data extraction. `Pillow` is used to process raw WebP image chunks and safely convert them to standard JPEGs.
 
 ## License
 
