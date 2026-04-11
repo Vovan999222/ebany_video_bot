@@ -11,24 +11,29 @@ The bot automatically downloads videos in the best available quality, adapts the
 
 ## Features
 
-* **Multi-platform**:
-    * Supports links from **YouTube** (including Shorts), **TikTok**, **Instagram** (Reels/Posts), and **SoundCloud**.
-    * Offers a choice: download as **Video** or **Audio**. (For SoundCloud, you can also download the **Cover Art**).
-* **Smart TikTok Integration**:
-    * **Auto-detection**: Automatically detects if a TikTok link is a standard video or a Photo.
-    * **Photo Carousels**: Download TikTok photos as a native Telegram Album (compressed for quick viewing) or as uncompressed Document files (original quality).
-    * Bypasses captchas and extracts watermark-free media and original MP3 audio via the TikWM API.
-* **Video Processing**:
-    * Forced conversion and codec selection to **H.264 (MP4)** for seamless playback directly in the Telegram chat.
-    * Supports video streaming (users can start watching before the file is fully downloaded to the cache).
-    * Original quality preserved: videos are sent as uncompressed documents to avoid Telegram's built-in compression.
-* **Audio & Metadata Extraction**:
-    * Converts audio tracks to **MP3** format (320kbps).
-    * Automatically embeds high-quality cover art directly into downloaded MP3 files using `yt-dlp` postprocessors.
-* **Logging**:
-    * Maintains detailed logs with daily rotation in the `logs/` directory.
-* **Asynchronous**:
-    * Downloading files does not block the bot's operation for other users, thanks to `asyncio.to_thread` and `aiohttp`.
+**Multi-platform**:
+* Supports links from **YouTube** (including Shorts), **TikTok**, **Instagram** (Reels/Posts), and **SoundCloud**.
+* Offers a choice: download as **Video** or **Audio**. (For SoundCloud, you can also download the **Cover Art**).
+
+**Smart TikTok Integration**:
+* **Auto-detection**: Automatically detects if a TikTok link is a standard video or a Photo.
+* **Photo**: Download TikTok photos as a native Telegram Album (compressed for quick viewing) or as uncompressed Document files (original quality).
+* Bypasses captchas and extracts watermark-free media and original MP3 audio via the TikWM API.
+
+**Video Processing**:
+* Forced conversion and codec selection to **H.264 (MP4)** for seamless playback directly in the Telegram chat.
+* Supports video streaming (users can start watching before the file is fully downloaded to the cache).
+* Original quality preserved: videos are sent as uncompressed documents to avoid Telegram's built-in compression.
+
+**Audio & Metadata Extraction**:
+* Converts audio tracks to **MP3** format (320kbps).
+* Automatically embeds high-quality cover art directly into downloaded MP3 files using `yt-dlp` postprocessors.
+
+**Logging**:
+* Maintains detailed logs with daily rotation in the `logs/` directory.
+
+**Asynchronous**:
+* Downloading files does not block the bot's operation for other users, thanks to `asyncio.to_thread` and `aiohttp`.
 
 ## Requirements
 
@@ -39,25 +44,28 @@ To run the bot, you need:
 
 ### Installing FFmpeg:
 
-* **Ubuntu/Debian**:
-   ```
-   sudo apt update && sudo apt upgrade && sudo apt install ffmpeg
-   ```
-* **Windows**:
-    * **Method 1 (Recommended):** Open a terminal (PowerShell or CMD) and run:
-      ```cmd
-      winget install Gyan.FFmpeg
-      ```
-      > **⚠️ "winget" command not found?** > If you are using an older version of Windows 10, download and install the **App Installer** from the [official GitHub releases](https://github.com/microsoft/winget-cli/releases) (look for the `.msixbundle` file).
+**Ubuntu/Debian**:
+```
+sudo apt update && sudo apt upgrade && sudo apt install ffmpeg
+```
+
+**Windows**:
+* **Method 1 (Recommended):** Open a terminal (PowerShell or CMD) and run:
+```cmd
+winget install Gyan.FFmpeg
+```
+> **⚠️ "winget" command not found?** > If you are using an older version of Windows 10, download and install the **App Installer** from the [official GitHub releases](https://github.com/microsoft/winget-cli/releases) (look for the `.msixbundle` file).
     
-    * **Method 2 (Manual):** Download the archive from the [official repository](https://github.com/GyanD/codexffmpeg/releases), unzip it, and add the path to the `bin` folder to your system environment variables (PATH).
-      ```cmd
-      C:\ffmpeg\bin
-      ```
-* **MacOS**:
-   ```
-   brew install ffmpeg
-   ```
+
+* **Method 2 (Manual):** Download the archive from the [official repository](https://github.com/GyanD/codexffmpeg/releases), unzip it, and add the path to the `bin` folder to your system environment variables (PATH).
+```cmd
+C:\ffmpeg\bin
+```
+
+**MacOS**:
+```
+brew install ffmpeg
+```
 
 ## Installation & Usage
 
