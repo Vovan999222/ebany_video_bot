@@ -1,26 +1,31 @@
 import os
 import aiohttp
+import logging
+import random
 from PIL import Image, ImageFile
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
+logger = logging.getLogger('__main__')
+
 async def get_tiktok_photos_and_download(url: str, user_id: int, as_doc: bool = False):
     """Скачивает фото. Если as_doc=True, сохраняет без сжатия Pillow."""
-    print(f"\n--- ЗАПУСК API (TIKWM) ДЛЯ: {url} ---")
+    logger.info(f"--- ЗАПУСК API (TIKWM) ДЛЯ: {url} ---")
     try:
         downloaded_files = []
         api_url = "https://www.tikwm.com/api/"
+        batch_id = random.randint(1000000, 99999999)
         async with aiohttp.ClientSession() as session:
             async with session.get(api_url, params={"url": url, "hd": 1}, timeout=15) as resp:
                 if resp.status != 200: return []
                 data = await resp.json()
-                if data.get("code") != 0: return []    
+                if data.get("code") != 0: return []
                 images = data.get("data", {}).get("images", [])
-                if not images: return []    
-                print(f"✅ Найдено фотографий: {len(images)}")
+                if not images: return []
+                logger.info(f"Найдено фотографий: {len(images)}")
                 for idx, img_url in enumerate(images[:10]):
-                    raw_filename = f"raw_photo_{user_id}_{idx}.webp"
-                    final_filename = f"photo_{user_id}_{idx}.jpeg" if as_doc else f"photo_{user_id}_{idx}.jpg"
+                    raw_filename = f"raw_photo_{batch_id}_{idx}.webp"
+                    final_filename = f"photo_{batch_id}_{idx}.jpeg" if as_doc else f"photo_{batch_id}_{idx}.jpg"
                     try:
                         async with session.get(img_url, timeout=15) as img_resp:
                             if img_resp.status == 200:
@@ -39,19 +44,20 @@ async def get_tiktok_photos_and_download(url: str, user_id: int, as_doc: bool = 
                                         img.save(final_filename, format="JPEG", quality=95)
                                         downloaded_files.append(final_filename)
                                         os.remove(raw_filename)
+                                        logger.info(f"Скачано фото {idx + 1} (TikTok)")
                     except Exception as e:
-                        print(f"⚠️ Сбой при скачивании фото {idx}: {e}")
+                        logger.warning(f"Сбой при скачивании фото {idx}: {e}")
                     if os.path.exists(raw_filename):
                         os.remove(raw_filename)                    
-        print("-----------------------------------")
+        logger.info("--- ЗАВЕРШЕНИЕ ОБРАБОТКИ ФОТО (TIKWM) ---")
         return downloaded_files
     except Exception as e:
-        print(f"❌ Ошибка в загрузчике: {e}")
+        logger.error(f"Ошибка в загрузчике TikTok: {e}")
         return []
 
 async def get_tiktok_audio(url: str, user_id: int):
     """Специальная функция для быстрого скачивания ТОЛЬКО аудио через TikWM"""
-    print(f"\n--- ЗАПУСК API АУДИО (TIKWM) ДЛЯ: {url} ---")
+    logger.info(f"--- ЗАПУСК API АУДИО (TIKWM) ДЛЯ: {url} ---")
     try:
         api_url = "https://www.tikwm.com/api/"
         async with aiohttp.ClientSession() as session:
@@ -60,18 +66,21 @@ async def get_tiktok_audio(url: str, user_id: int):
                 data = await resp.json()
                 if data.get("code") != 0: return None  
                 music_url = data.get("data", {}).get("music")
-                if not music_url: return None  
-                print("🎵 Ссылка на аудио найдена, скачиваю...")
-                audio_filename = f"temp_audio_only_{user_id}.mp3"
+                if not music_url: return None
+                logger.info("Ссылка на аудио найдена, скачиваю...")
+                
+                # 🔥 Полностью случайное имя для аудио
+                audio_filename = f"tiktok_audio_{random.randint(1000000, 99999999)}.mp3"
+                
                 async with session.get(music_url, timeout=15) as audio_resp:
                     if audio_resp.status == 200:
                         with open(audio_filename, 'wb') as f:
                             f.write(await audio_resp.read())
-                        print("✅ Аудио успешно сохранено!")
+                        logger.info("Аудио TikTok успешно сохранено!")
                         return audio_filename
         return None
     except Exception as e:
-        print(f"❌ Ошибка при скачивании аудио: {e}")
+        logger.error(f"Ошибка при скачивании аудио TikTok: {e}")
         return None
 
 async def check_tiktok_media_type(url: str) -> str:
