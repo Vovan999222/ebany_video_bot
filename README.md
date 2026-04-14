@@ -112,15 +112,15 @@ pip install -r requirements.txt
 
 ### 4. Configuration
 
-1. Open the `config.py` file and insert your bot token from @BotFather:
-   ```python
-   TOKEN = ""
-   ```
-2. Open `instagram_photo_downloader.py` and insert your Instagram credentials for the scraper to work:
-   ```python
-   IG_USERNAME = ""
-   IG_PASSWORD = ""
-   ```
+Open the `config.py` file and insert your bot token from [@BotFather](https://telegram.me/BotFather):
+```python
+TOKEN = ""
+```
+Open `instagram_photo_downloader.py` and insert your Instagram credentials for the scraper to work:
+```python
+IG_USERNAME = ""
+IG_PASSWORD = ""
+```
 
 ### 5. First run & Instagram Login (2FA)
 
@@ -149,4 +149,4 @@ python bot.py
 
 ## License
 
-This project is distributed under the [MIT License](https://raw.githubusercontent.com/Vovan999222/ebany_video_bot/refs/heads/main/LICENSE).
+This project is distributed under the [MIT License](https://raw.githubusercontent.com/Vovan999222/ebany_video_bot/refs/heads/main/LICENSE)
