@@ -17,7 +17,7 @@ The bot automatically downloads videos in the best available quality, adapts the
 * Offers a choice: download as **Video** or **Audio**. (For SoundCloud, you can also download the **Cover Art**).
 
 **Smart TikTok & Instagram Integration**:
-* **Auto-detection**: Automatically detects if a link is a standard video or a Photo Carousel and provides context-aware menus.
+* **Auto-detection**: Automatically detects if a link is a standard video or a photo publication and provides context-aware menus.
 * **Photo**: Download photos as a native Telegram Album (compressed for quick viewing) or as uncompressed Document files (original quality).
 * Bypasses captchas and extracts watermark-free media and original MP3 audio via the TikWM API and headless browser scraping.
 
@@ -101,6 +101,7 @@ pip install aiogram yt-dlp Pillow aiohttp playwright
 After installing the Python package, you must install the Chromium browser binaries and system dependencies:
 ```bash
 playwright install chromium
+
 # If you are installing on a clean Linux server (e.g., Ubuntu), also run:
 playwright install-deps
 ```
