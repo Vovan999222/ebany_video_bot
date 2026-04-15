@@ -202,6 +202,13 @@ async def handle_media_link(message: types.Message, state: FSMContext):
                 [InlineKeyboardButton(text="🎵 Скачать звук", callback_data='audio')]
             ])
             await message.answer("Что именно нужно скачать?", reply_markup=keyboard)
+    else:
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="📹 Скачать видео", callback_data='video')],
+            [InlineKeyboardButton(text="📁 Скачать видео без сжатия", callback_data='video_doc')],
+            [InlineKeyboardButton(text="🎵 Скачать звук", callback_data='audio')]
+        ])
+        await message.answer("Что именно нужно скачать?", reply_markup=keyboard)
 
 @dp.callback_query(F.data.in_({"video", "video_doc", "audio", "cover", "tiktok_photos", "tt_photos_album", "tt_photos_doc", "ig_photos_album", "ig_photos_doc"}))
 async def button_callback(callback: types.CallbackQuery, state: FSMContext):
