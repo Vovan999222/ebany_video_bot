@@ -97,7 +97,7 @@ You can install the libraries manually:
 pip install aiogram yt-dlp Pillow aiohttp playwright
 ```
 
-**⚠️ Important step for Playwright (Instagram module):**
+> **⚠️ Important step for Playwright (Instagram module):**
 After installing the Python package, you must install the Chromium browser binaries and system dependencies:
 ```bash
 playwright install chromium
