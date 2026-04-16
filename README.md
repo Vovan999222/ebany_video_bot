@@ -101,8 +101,9 @@ pip install aiogram yt-dlp Pillow aiohttp playwright
 After installing the Python package, you must install the Chromium browser binaries and system dependencies:
 ```bash
 playwright install chromium
-
-# If you are installing on a clean Linux server (e.g., Ubuntu), also run:
+```
+If you are installing on a clean Linux server (e.g., Ubuntu), also run:
+```
 playwright install-deps
 ```
 
