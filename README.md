@@ -145,7 +145,7 @@ python bot.py
 * **Video**: `yt-dlp` settings are forced to request `bestvideo[ext=mp4][vcodec^=avc]` format to exclude AV1/VP9 codecs, which are not supported by Telegram's in-app player.
 * **Audio**: Processed via `FFmpegExtractAudio` with the MP3 codec.
 * **TikTok Parsing**: Uses `aiohttp` to communicate with the TikWM API for fast, captcha-free data extraction. `Pillow` is used to process raw WebP image chunks and safely convert them to standard JPEGs.
-* **Instagram Scraping**: Uses `playwright` in stealth mode to bypass Meta's scraping restrictions. Employs a custom "Visual Radar" algorithm to detect and extract high-quality carousel images based on DOM rendering size, ignoring recommendations and avatars.
+* **Instagram Scraping**: Uses `playwright` in stealth mode to bypass Meta's scraping restrictions. Employs a custom "Visual Radar" algorithm to detect and extract high-quality images based on DOM rendering size, ignoring recommendations and avatars.
 * **Concurrency & Race Conditions**: Implements random dynamic batch ID generation (`uuid`/`random`) for downloaded files to prevent race conditions when users send multiple links simultaneously.
 
 ## License
