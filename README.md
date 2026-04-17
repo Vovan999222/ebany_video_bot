@@ -109,7 +109,7 @@ If you are installing on a clean Linux server (e.g., Ubuntu), also run:
 playwright install-deps
 ```
 
-Or create a `requirements.txt` file and install via:
+Or use the `requirements.txt` file and install it via:
 ```bash
 pip install -r requirements.txt
 ```
