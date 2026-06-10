@@ -68,10 +68,9 @@ async def get_tiktok_audio(url: str, user_id: int):
                 music_url = data.get("data", {}).get("music")
                 if not music_url: return None
                 logger.info("Ссылка на аудио найдена, скачиваю...")
-                
-                # 🔥 Полностью случайное имя для аудио
+
                 audio_filename = f"tiktok_audio_{random.randint(1000000, 99999999)}.mp3"
-                
+
                 async with session.get(music_url, timeout=15) as audio_resp:
                     if audio_resp.status == 200:
                         with open(audio_filename, 'wb') as f:
