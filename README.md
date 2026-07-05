@@ -6,6 +6,8 @@
 ![FFmpeg](https://img.shields.io/badge/FFmpeg-Enabled-green?style=for-the-badge&logo=ffmpeg)
 ![Playwright](https://img.shields.io/badge/Playwright-Enabled-45ba4b?style=for-the-badge&logo=Playwright)
 
+**Read this in other languages:** [click](https://docs.volodimir001.me/ebany-video-bot.html)
+
 This Telegram bot is designed to easily download media files via links from popular social networks.
 
 The bot automatically downloads videos in the best available quality, adapts them for Telegram's native player, extracts audio tracks, and seamlessly handles TikTok and Instagram photos.
