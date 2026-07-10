@@ -139,11 +139,10 @@ async def cmd_start(message: types.Message):
     name = get_user_display_name(user)
     logger.info(f"[{user.id}] {name} начал использовать бота.")
 
-    async with ChatActionSender.typing(bot=bot, chat_id=message.chat.id):
-        await message.answer(
-            "Привет! Я бот для скачивания медиа.\n"
-            "Отправь мне ссылку на YouTube, TikTok, Instagram или SoundCloud, и я предложу форматы для загрузки!"
-        )
+    await message.answer(
+        "Привет! Я бот для скачивания медиа.\n"
+        "Отправь мне ссылку на YouTube, TikTok, Instagram или SoundCloud, и я предложу форматы для загрузки!"
+    )
 
 @dp.message(F.text.regexp(r'(?i)https?://(?:[a-zA-Z0-9-]+\.)*(tiktok\.com|youtube\.com|youtu\.be|instagram\.com|soundcloud\.com)/.*'))
 async def handle_media_link(message: types.Message, state: FSMContext):
@@ -153,66 +152,66 @@ async def handle_media_link(message: types.Message, state: FSMContext):
     logger.info(f"[{user.id}] {name} прислал ссылку: {url}")
     await state.update_data(media_url=url)
 
-    async with ChatActionSender.typing(bot=bot, chat_id=message.chat.id):
-        if 'soundcloud.com' in url.lower():
+    if 'soundcloud.com' in url.lower():
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🖼 Скачать обложку трека", callback_data='cover')],
+            [InlineKeyboardButton(text="🎵 Скачать трек", callback_data='audio')]
+        ])
+        await message.reply("Что сделать с ссылкой?", reply_markup=keyboard) 
+
+    elif 'tiktok.com' in url.lower():
+        status_msg = await message.reply("⏳ Анализирую ссылку...")
+        media_type = await check_tiktok_media_type(url)
+        
+        if media_type == 'photo':
             keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="🖼 Скачать обложку трека", callback_data='cover')],
-                [InlineKeyboardButton(text="🎵 Скачать трек", callback_data='audio')]
+                [InlineKeyboardButton(text="🖼 Быстро со сжатием", callback_data="tt_photos_album")],
+                [InlineKeyboardButton(text="📁 Без сжатия", callback_data="tt_photos_doc")],
+                [InlineKeyboardButton(text="🎵 Скачать звук", callback_data="audio")]
             ])
-            await message.reply("Что сделать с ссылкой?", reply_markup=keyboard) 
-
-        elif 'tiktok.com' in url.lower():
-            status_msg = await message.reply("⏳ Анализирую ссылку...")
-            media_type = await check_tiktok_media_type(url)
-            if media_type == 'photo':
-                keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text="🖼 Альбомом (Быстро, со сжатием)", callback_data="tt_photos_album")],
-                    [InlineKeyboardButton(text="📁 Файлами (Оригинал, без сжатия)", callback_data="tt_photos_doc")],
-                    [InlineKeyboardButton(text="🎵 Скачать звук", callback_data="audio")]
-                ])
-            elif media_type == 'video':
-                keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text="📹 Скачать видео", callback_data="video")],
-                    [InlineKeyboardButton(text="📁 Скачать видео без сжатия", callback_data="video_doc")],
-                    [InlineKeyboardButton(text="🎵 Скачать звук", callback_data="audio")]
-                ])
-            else:
-                keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text="📹 Скачать видео", callback_data="video")],
-                    [InlineKeyboardButton(text="🖼 Скачать фото", callback_data="tiktok_photos")],
-                    [InlineKeyboardButton(text="🎵 Скачать звук", callback_data="audio")]
-                ])
-            await status_msg.edit_text("Что сделать с ссылкой?", reply_markup=keyboard)
-
-        elif 'instagram.com' in url.lower():
-            if '/reel/' in url.lower() or '/tv/' in url.lower():
-                keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text="📹 Скачать видео", callback_data='video')],
-                    [InlineKeyboardButton(text="📁 Скачать видео без сжатия", callback_data='video_doc')],
-                    [InlineKeyboardButton(text="🎵 Скачать звук", callback_data='audio')]
-                ])
-                await message.reply("Что сделать с ссылкой?", reply_markup=keyboard)
-            elif '/p/' in url.lower():
-                keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text="🖼 Альбомом (Быстро, со сжатием)", callback_data='ig_photos_album')],
-                    [InlineKeyboardButton(text="📁 Файлами (Оригинал, без сжатия)", callback_data='ig_photos_doc')],
-                    [InlineKeyboardButton(text="🎵 Скачать звук", callback_data='audio')]
-                ])
-                await message.reply("Что сделать с ссылкой?", reply_markup=keyboard)
-            else:
-                keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text="📹 Скачать видео", callback_data='video')],
-                    [InlineKeyboardButton(text="🖼 Скачать фото (Альбомом)", callback_data='ig_photos_album')],
-                    [InlineKeyboardButton(text="🎵 Скачать звук", callback_data='audio')]
-                ])
-                await message.reply("Что сделать с ссылкой?", reply_markup=keyboard)
+        elif media_type == 'video':
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="📹 Скачать видео", callback_data="video")],
+                [InlineKeyboardButton(text="📁 Скачать видео без сжатия", callback_data="video_doc")],
+                [InlineKeyboardButton(text="🎵 Скачать звук", callback_data="audio")]
+            ])
         else:
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="📹 Скачать видео", callback_data="video")],
+                [InlineKeyboardButton(text="🖼 Скачать фото", callback_data="tiktok_photos")],
+                [InlineKeyboardButton(text="🎵 Скачать звук", callback_data="audio")]
+            ])
+        await status_msg.edit_text("Что сделать с ссылкой?", reply_markup=keyboard)
+
+    elif 'instagram.com' in url.lower():
+        if '/reel/' in url.lower() or '/tv/' in url.lower():
             keyboard = InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="📹 Скачать видео", callback_data='video')],
                 [InlineKeyboardButton(text="📁 Скачать видео без сжатия", callback_data='video_doc')],
                 [InlineKeyboardButton(text="🎵 Скачать звук", callback_data='audio')]
             ])
             await message.reply("Что сделать с ссылкой?", reply_markup=keyboard)
+        elif '/p/' in url.lower():
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="🖼 Быстро со сжатием", callback_data='ig_photos_album')],
+                [InlineKeyboardButton(text="📁 Без сжатия", callback_data='ig_photos_doc')],
+                [InlineKeyboardButton(text="🎵 Скачать звук", callback_data='audio')]
+            ])
+            await message.reply("Что сделать с ссылкой?", reply_markup=keyboard)
+        else:
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="📹 Скачать видео", callback_data='video')],
+                [InlineKeyboardButton(text="🖼 Скачать фото (Альбомом)", callback_data='ig_photos_album')],
+                [InlineKeyboardButton(text="🎵 Скачать звук", callback_data='audio')]
+            ])
+            await message.reply("Что сделать с ссылкой?", reply_markup=keyboard)
+    else:
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="📹 Скачать видео", callback_data='video')],
+            [InlineKeyboardButton(text="📁 Скачать видео без сжатия", callback_data='video_doc')],
+            [InlineKeyboardButton(text="🎵 Скачать звук", callback_data='audio')]
+        ])
+        await message.reply("Что сделать с ссылкой?", reply_markup=keyboard)
 
 @dp.callback_query(F.data.in_({"video", "video_doc", "audio", "cover", "tiktok_photos", "tt_photos_album", "tt_photos_doc", "ig_photos_album", "ig_photos_doc"}))
 async def button_callback(callback: types.CallbackQuery, state: FSMContext):
@@ -230,8 +229,8 @@ async def button_callback(callback: types.CallbackQuery, state: FSMContext):
         
     if mode == 'tiktok_photos':
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🖼 Альбомом (Быстро, со сжатием)", callback_data="tt_photos_album")],
-            [InlineKeyboardButton(text="📁 Файлами (Оригинал, без сжатия)", callback_data="tt_photos_doc")],
+            [InlineKeyboardButton(text="🖼 Быстро со сжатием", callback_data="tt_photos_album")],
+            [InlineKeyboardButton(text="📁 Без сжатия", callback_data="tt_photos_doc")],
             [InlineKeyboardButton(text="🎵 Скачать только звук", callback_data="audio")]
         ])
         await callback.message.edit_text(text="Как именно скачать?", reply_markup=keyboard)
@@ -241,13 +240,13 @@ async def button_callback(callback: types.CallbackQuery, state: FSMContext):
 
     status_text = {
         'video': "⏳ Скачиваю видео...",
-        'video_doc': "⏳ Скачиваю видео (файлом)...",
+        'video_doc': "⏳ Скачиваю видео...",
         'audio': "⏳ Скачиваю аудио...",
         'cover': "⏳ Получаю обложку...",
         'tt_photos_album': "⏳ Ищу и скачиваю альбом...",
-        'tt_photos_doc': "⏳ Ищу и скачиваю оригиналы фото...",
+        'tt_photos_doc': "⏳ Ищу и скачиваю фото...",
         'ig_photos_album': "⏳ Ищу и скачиваю фото...",
-        'ig_photos_doc': "⏳ Скачиваю оригиналы фото..."
+        'ig_photos_doc': "⏳ Скачиваю фото..."
     }.get(mode, "⏳ Обработка...")
     status_msg = await callback.message.edit_text(status_text)
 
@@ -269,24 +268,30 @@ async def button_callback(callback: types.CallbackQuery, state: FSMContext):
             if mode in ['tt_photos_album', 'tt_photos_doc']:
                 is_doc = (mode == 'tt_photos_doc')
                 downloaded_files = await get_tiktok_photos_and_download(media_url, user.id, as_doc=is_doc)
+                
                 if downloaded_files:
-                    media_group = MediaGroupBuilder(caption="Твои фото 📸" if not is_doc else None)
+                    chunk_size = 10
+                    for i in range(0, len(downloaded_files), chunk_size):
+                        chunk = downloaded_files[i:i + chunk_size]
+                        is_last_chunk = (i + chunk_size) >= len(downloaded_files)
+                        caption = "Твои фото 📸" if not is_doc and is_last_chunk else None
+                        media_group = MediaGroupBuilder(caption=caption)
+                        for file in chunk:
+                            if is_doc:
+                                media_group.add_document(media=FSInputFile(file)) 
+                            else:
+                                media_group.add_photo(media=FSInputFile(file))    
+                        try:
+                            await callback.message.answer_media_group(media=media_group.build())
+                        except TelegramEntityTooLarge:
+                            await callback.message.answer("❌ Одна из фотографий слишком большая для отправки.")
+                        except Exception as e:
+                            logger.error(f"Ошибка отправки медиа: {e}")
+                            await callback.message.answer("❌ Произошла ошибка при отправке части фотографий.")
+
                     for file in downloaded_files:
-                        if is_doc:
-                            media_group.add_document(media=FSInputFile(file)) 
-                        else:
-                            media_group.add_photo(media=FSInputFile(file))    
-                    try:
-                        await callback.message.answer_media_group(media=media_group.build())
-                    except TelegramEntityTooLarge:
-                        await callback.message.answer("❌ Альбом слишком большой для отправки.")
-                    except Exception as e:
-                        logger.error(f"Ошибка отправки медиа: {e}")
-                        await callback.message.answer("❌ Произошла ошибка при отправке фотографий.")
-                    finally:
-                        for file in downloaded_files:
-                            if os.path.exists(file):
-                                os.remove(file)
+                        if os.path.exists(file):
+                            os.remove(file)
                 else:
                     await callback.message.answer("❌ Не удалось скачать фотографии. Убедитесь, что это карусель с фото.")
                 await status_msg.delete()
@@ -295,24 +300,30 @@ async def button_callback(callback: types.CallbackQuery, state: FSMContext):
             if mode in ['ig_photos_album', 'ig_photos_doc']:
                 is_doc = (mode == 'ig_photos_doc')
                 downloaded_files = await get_insta_photos(media_url, user.id, as_doc=is_doc)
+                
                 if downloaded_files:
-                    media_group = MediaGroupBuilder(caption="Твои фото 📸" if not is_doc else None)
+                    chunk_size = 10
+                    for i in range(0, len(downloaded_files), chunk_size):
+                        chunk = downloaded_files[i:i + chunk_size]
+                        is_last_chunk = (i + chunk_size) >= len(downloaded_files)
+                        caption = "Твои фото 📸" if not is_doc and is_last_chunk else None
+                        media_group = MediaGroupBuilder(caption=caption)
+                        for file in chunk:
+                            if is_doc:
+                                media_group.add_document(media=FSInputFile(file)) 
+                            else:
+                                media_group.add_photo(media=FSInputFile(file))    
+                        try:
+                            await callback.message.answer_media_group(media=media_group.build())
+                        except TelegramEntityTooLarge:
+                            await callback.message.answer("❌ Одна из фотографий слишком большая для отправки.")
+                        except Exception as e:
+                            logger.error(f"Ошибка отправки Instagram медиа: {e}")
+                            await callback.message.answer("❌ Произошла ошибка при отправке части фотографий.")
+
                     for file in downloaded_files:
-                        if is_doc:
-                            media_group.add_document(media=FSInputFile(file)) 
-                        else:
-                            media_group.add_photo(media=FSInputFile(file))    
-                    try:
-                        await callback.message.answer_media_group(media=media_group.build())
-                    except TelegramEntityTooLarge:
-                        await callback.message.answer("❌ Альбом слишком большой для отправки.")
-                    except Exception as e:
-                        logger.error(f"Ошибка отправки Instagram медиа: {e}")
-                        await callback.message.answer("❌ Произошла ошибка при отправке фотографий.")
-                    finally:
-                        for file in downloaded_files:
-                            if os.path.exists(file):
-                                os.remove(file)
+                        if os.path.exists(file):
+                            os.remove(file)
                 else:
                     await callback.message.answer("❌ Не удалось скачать фото. Убедитесь, что аккаунт открыт и это пост с картинками.")
                 await status_msg.delete()
