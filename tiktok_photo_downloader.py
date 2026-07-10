@@ -23,7 +23,7 @@ async def get_tiktok_photos_and_download(url: str, user_id: int, as_doc: bool = 
                 images = data.get("data", {}).get("images", [])
                 if not images: return []
                 logger.info(f"Найдено фотографий: {len(images)}")
-                for idx, img_url in enumerate(images[:10]):
+                for idx, img_url in enumerate(images):
                     raw_filename = f"raw_photo_{batch_id}_{idx}.webp"
                     final_filename = f"photo_{batch_id}_{idx}.jpeg" if as_doc else f"photo_{batch_id}_{idx}.jpg"
                     try:
@@ -70,7 +70,7 @@ async def get_tiktok_audio(url: str, user_id: int):
                 logger.info("Ссылка на аудио найдена, скачиваю...")
 
                 audio_filename = f"tiktok_audio_{random.randint(1000000, 99999999)}.mp3"
-
+                
                 async with session.get(music_url, timeout=15) as audio_resp:
                     if audio_resp.status == 200:
                         with open(audio_filename, 'wb') as f:
