@@ -127,11 +127,18 @@ def download_media(url: str, mode: str) -> str:
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         title = info.get('title', 'Unknown Media')
+        is_music = False
+        if any(domain in url.lower() for domain in ['soundcloud.com', 'music.youtube.com']):
+            is_music = True
+        elif info.get('categories') and 'Music' in info.get('categories'):
+            is_music = True
+        elif info.get('artist') or info.get('track'):
+            is_music = True
         filename = ydl.prepare_filename(info)
         if mode == 'audio':
             base_name, _ = os.path.splitext(filename)
-            filename = f"{base_name}.mp3" 
-        return filename, title
+            filename = f"{base_name}.mp3"
+        return filename, title, is_music
 
 @dp.message(CommandStart())
 async def cmd_start(message: types.Message):
@@ -343,6 +350,8 @@ async def button_callback(callback: types.CallbackQuery, state: FSMContext):
                 await status_msg.delete()
                 return
 
+            is_music = False 
+
             if mode == 'audio' and 'tiktok' in media_url.lower():
                 file_path = await get_tiktok_audio(media_url, user.id)
                 title = f"TikTok_Audio_{random.randint(1000, 9999)}"
@@ -351,24 +360,34 @@ async def button_callback(callback: types.CallbackQuery, state: FSMContext):
                     return
             else:
                 dl_mode = 'video' if mode in ('video', 'video_doc') else mode
-                file_path, title = await asyncio.to_thread(download_media, media_url, dl_mode)   
+                file_path, title, is_music = await asyncio.to_thread(download_media, media_url, dl_mode)  
                 
             try:
                 safe_title = re.sub(r'[\\/*?:"<>|]', "", title)
+                random_id = random.randint(1000000, 99999999)
                 
                 if mode == 'video':
-                    video_file = FSInputFile(file_path, filename=f"{safe_title}.mp4")
+                    video_file = FSInputFile(file_path, filename=f"video_{random_id}.mp4")
                     await callback.message.answer_video(video=video_file, supports_streaming=True)
                     
                 elif mode == 'video_doc':
-                    document_file = FSInputFile(file_path, filename=f"{safe_title}.mp4")
+                    document_file = FSInputFile(file_path, filename=f"video_{random_id}.mp4")
                     await callback.message.answer_document(document=document_file, disable_content_type_detection=True)
                     
                 elif mode == 'audio':
-                    audio_file = FSInputFile(file_path, filename=f"{safe_title}.mp3")
-                    await callback.message.answer_audio(audio=audio_file, title=safe_title) 
-                logger.info(f"[{user.id}] {name} -> Успешно отправлен файл {mode} ({safe_title}).")
+                    if is_music:
+                        audio_filename = f"{safe_title}.mp3"
+                        track_title = safe_title
+                    else:
+                        audio_filename = f"audio_{random_id}.mp3"
+                        track_title = None
+                        
+                    audio_file = FSInputFile(file_path, filename=audio_filename)
+                    await callback.message.answer_audio(audio=audio_file, title=track_title) 
+                    
+                logger.info(f"[{user.id}] {name} -> Успешно отправлен файл {mode}.")
                 await status_msg.delete()
+
             except TelegramEntityTooLarge:
                 await status_msg.edit_text("❌ Файл слишком большой! Telegram позволяет отправлять файлы до 50 МБ.")
             finally:
