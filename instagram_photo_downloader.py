@@ -171,7 +171,7 @@ async def get_insta_photos(url: str, user_id: int, as_doc: bool = False):
         batch_id = random.randint(1000000, 99999999)
 
         async with aiohttp.ClientSession() as session:
-            for idx, img_url in enumerate(media_urls[:10]):
+            for idx, img_url in enumerate(media_urls):
                 final_filename = f"ig_{batch_id}_{idx}.jpeg" if as_doc else f"ig_{batch_id}_{idx}.jpg"
                 try:
                     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
