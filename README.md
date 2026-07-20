@@ -4,7 +4,7 @@
 ![Telegram](https://img.shields.io/badge/Telegram-Bot-2CA5E0?style=for-the-badge&logo=telegram)
 ![yt-dlp](https://img.shields.io/badge/yt--dlp-Enabled-red?style=for-the-badge&logo=youtube)
 ![FFmpeg](https://img.shields.io/badge/FFmpeg-Enabled-green?style=for-the-badge&logo=ffmpeg)
-![Playwright](https://img.shields.io/badge/Playwright-Enabled-45ba4b?style=for-the-badge&logo=Playwright)
+![CloakBrowser](https://img.shields.io/badge/CloakBrowser-Anti--Detect-8A2BE2?style=for-the-badge)
 
 **Read this in other languages:** [click](https://docs.volodimir001.me/ebany-video-bot.html)
 
@@ -21,7 +21,7 @@ The bot automatically downloads videos in the best available quality, adapts the
 **Smart TikTok & Instagram Integration**:
 * **Auto-detection**: Automatically detects if a link is a standard video or a photo publication and provides context-aware menus.
 * **Photo**: Download photos as a native Telegram Album (compressed for quick viewing) or as uncompressed Document files (original quality).
-* Bypasses captchas and extracts watermark-free media and original MP3 audio via the TikWM API and headless browser scraping.
+* **Anti-Detect Scraping**: Bypasses captchas and extracts watermark-free media using **CloakBrowser** (an anti-detect Chromium fork), eliminating the need for unstable third-party APIs. Audio tracks are now reliably extracted directly via `yt-dlp`.
 
 **Video Processing**:
 * Forced conversion and codec selection to **H.264 (MP4)** for seamless playback directly in the Telegram chat.
@@ -98,18 +98,11 @@ source venv/bin/activate
 You can install the libraries manually:
 
 ```bash
-pip install aiogram yt-dlp Pillow aiohttp playwright
+pip install aiogram yt-dlp Pillow aiohttp cloakbrowser
 ```
 
-> **⚠️ Important step for Playwright (Instagram module):**
-After installing the Python package, you must install the Chromium browser binaries and system dependencies:
-```bash
-playwright install chromium
-```
-If you are installing on a clean Linux server (e.g., Ubuntu), also run:
-```
-playwright install-deps
-```
+> **⚠️ Note on CloakBrowser:**
+Upon the first run, cloakbrowser will automatically download its own patched Chromium binary (~200MB) needed for stealth scraping. No additional install-deps commands are required!
 
 Or use the `requirements.txt` file and install it via:
 ```bash
@@ -149,8 +142,9 @@ python bot.py
 * **Limits**: The bot processes and sends files up to **50 MB** (Telegram Bot API restriction).
 * **Video**: `yt-dlp` settings are forced to request `bestvideo[ext=mp4][vcodec^=avc]` format to exclude AV1/VP9 codecs, which are not supported by Telegram's in-app player.
 * **Audio**: Processed via `FFmpegExtractAudio` with the MP3 codec.
-* **TikTok Parsing**: Uses `aiohttp` to communicate with the TikWM API for fast, captcha-free data extraction. `Pillow` is used to process raw WebP image chunks and safely convert them to standard JPEGs.
-* **Instagram Scraping**: Uses `playwright` in stealth mode to bypass Meta's scraping restrictions. Employs a custom "Visual Radar" algorithm to detect and extract high-quality images based on DOM rendering size, ignoring recommendations and avatars.
+* **TikTok Parsing**: Media type detection is optimized using the built-in system `curl` without following redirects. Image carousels are parsed by instantly extracting native high-quality URLs directly from TikTok's internal React JSON state (`__UNIVERSAL_DATA_FOR_REHYDRATION__`), with a fallback to DOM simulation via `cloakbrowser`. Audio is extracted via `yt-dlp`.
+* **Instagram Scraping**: Uses `cloakbrowser` to completely bypass Meta's login and scraping restrictions (Anti-Detect). Employs a custom "Visual Radar" algorithm to detect and extract high-quality images based on DOM rendering size, while selectively blocking heavy media/fonts to drastically speed up page loads.
+* **Asynchronous Speed**: Photo carousels from both TikTok and Instagram are downloaded concurrently using `asyncio.gather`, ensuring ultra-fast media retrieval. `Pillow` is used in parallel threads to safely process raw WebP chunks into standard JPEGs.
 * **Concurrency & Race Conditions**: Implements random dynamic batch ID generation (`uuid`/`random`) for downloaded files to prevent race conditions when users send multiple links simultaneously.
 
 ## License
