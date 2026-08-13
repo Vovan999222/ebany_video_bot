@@ -1,1 +1,4 @@
 TOKEN = ""
+
+IG_USERNAME = ""
+IG_PASSWORD = ""
