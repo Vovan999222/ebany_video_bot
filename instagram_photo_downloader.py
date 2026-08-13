@@ -1,15 +1,17 @@
 import os
+import re
+import html
+import urllib.parse
+import yt_dlp
 import asyncio
 import aiohttp
 import logging
 import random
 from PIL import ImageFile
 from cloakbrowser import launch_async
+from config import IG_USERNAME, IG_PASSWORD
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-
-IG_USERNAME = ""
-IG_PASSWORD = ""
 
 STATE_FILE = "ig_browser_state.json"
 logger = logging.getLogger('__main__')
@@ -29,19 +31,14 @@ async def get_insta_photos(url: str, user_id: int, as_doc: bool = False):
         if os.path.exists(STATE_FILE):
             logger.info("Загружаю сохраненную сессию...")
             context_options['storage_state'] = STATE_FILE
-            
         context = await browser.new_context(**context_options)
         page = await context.new_page()
-
         await page.route("**/*", lambda route: route.abort() if route.request.resource_type in ["media", "font"] else route.continue_())
-
         logger.info("Открываю страницу...")
-
         if not os.path.exists(STATE_FILE):
             logger.info("Сессия не найдена. Перехожу на страницу входа...")
             await page.goto("https://www.instagram.com/accounts/login/", wait_until="domcontentloaded")
             await page.wait_for_timeout(5000)
-            
             cookie_btn = await page.query_selector("button:has-text('Allow all cookies'), button:has-text('Принять все')")
             if cookie_btn:
                 await cookie_btn.click()
@@ -110,6 +107,7 @@ async def get_insta_photos(url: str, user_id: int, as_doc: bool = False):
             await page.wait_for_selector("img", timeout=5000)
         except:
             pass
+
         async def collect():
             urls = await page.evaluate('''() => {
                 let images = Array.from(document.querySelectorAll('img'));
@@ -174,7 +172,7 @@ async def get_insta_photos(url: str, user_id: int, as_doc: bool = False):
     if not media_urls:
         logger.warning("Фотографии не найдены. Если это видео (Reel), используй кнопку 'Скачать видео'.")
         return []
-    logger.info(f"Успех! Радар захватил целевых фотографий: {len(media_urls)}. Начинаю параллельную загрузку...")
+    logger.info(f"Успех! Радар захватил целевых фотографий: {len(media_urls)}.")
     batch_id = random.randint(1000000, 99999999)
 
     async def fetch_ig_photo(session, img_url, idx):
