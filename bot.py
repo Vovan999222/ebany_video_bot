@@ -355,12 +355,14 @@ async def button_callback(callback: types.CallbackQuery, state: FSMContext):
             if mode == 'audio' and 'tiktok' in media_url.lower():
                 file_path = await get_tiktok_audio(media_url, user.id)
                 title = f"TikTok_Audio_{random.randint(1000, 9999)}"
+                is_music = False
                 if not file_path:
                     await status_msg.edit_text("❌ Не удалось скачать аудио с TikTok. Возможно, звук удален.")
                     return
+            
             else:
                 dl_mode = 'video' if mode in ('video', 'video_doc') else mode
-                file_path, title, is_music = await asyncio.to_thread(download_media, media_url, dl_mode)  
+                file_path, title, is_music = await asyncio.to_thread(download_media, media_url, dl_mode) 
                 
             try:
                 safe_title = re.sub(r'[\\/*?:"<>|]', "", title)
