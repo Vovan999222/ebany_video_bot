@@ -16,7 +16,7 @@ The bot automatically downloads videos in the best available quality, adapts the
 
 **Multi-platform**:
 * Supports links from **YouTube** (including Shorts), **TikTok**, **Instagram** (Reels/Posts), and **SoundCloud**.
-* Offers a choice: download as **Video** or **Audio**. (For SoundCloud, you can also download the **Cover Art**).
+* Offers a choice: download as **Video** or **Audio** (Audio extraction is supported for YouTube, TikTok, and SoundCloud. For SoundCloud, you can also download the **Cover Art**).
 
 **Smart TikTok & Instagram Integration**:
 * **Auto-detection**: Automatically detects if a link is a standard video or a photo publication and provides context-aware menus.
@@ -111,12 +111,10 @@ pip install -r requirements.txt
 
 ### 4. Configuration
 
-Open the `config.py` file and insert your bot token from [@BotFather](https://telegram.me/BotFather):
+Open the `config.py` file and insert your bot token from [@BotFather](https://telegram.me/BotFather), as well as your Instagram credentials for the scraper to work:
 ```python
 TOKEN = ""
-```
-Open `instagram_photo_downloader.py` and insert your Instagram credentials for the scraper to work:
-```python
+
 IG_USERNAME = ""
 IG_PASSWORD = ""
 ```
@@ -142,7 +140,7 @@ python bot.py
 * **Limits**: The bot processes and sends files up to **50 MB** (Telegram Bot API restriction).
 * **Video**: `yt-dlp` settings are forced to request `bestvideo[ext=mp4][vcodec^=avc]` format to exclude AV1/VP9 codecs, which are not supported by Telegram's in-app player.
 * **Audio**: Processed via `FFmpegExtractAudio` with the MP3 codec.
-* **TikTok Parsing**: Media type detection is optimized using the built-in system `curl` without following redirects. Image carousels are parsed by instantly extracting native high-quality URLs directly from TikTok's internal React JSON state (`__UNIVERSAL_DATA_FOR_REHYDRATION__`), with a fallback to DOM simulation via `cloakbrowser`. Audio is extracted via `yt-dlp`.
+* **TikTok Parsing**: Media type detection is optimized using the built-in system `curl` without following redirects. Image carousels are parsed by extracting native high-quality URLs via DOM simulation using `cloakbrowser` to bypass captchas and protections. Audio is extracted via `yt-dlp`.
 * **Instagram Scraping**: Uses `cloakbrowser` to completely bypass Meta's login and scraping restrictions (Anti-Detect). Employs a custom "Visual Radar" algorithm to detect and extract high-quality images based on DOM rendering size, while selectively blocking heavy media/fonts to drastically speed up page loads.
 * **Asynchronous Speed**: Photo carousels from both TikTok and Instagram are downloaded concurrently using `asyncio.gather`, ensuring ultra-fast media retrieval. `Pillow` is used in parallel threads to safely process raw WebP chunks into standard JPEGs.
 * **Concurrency & Race Conditions**: Implements random dynamic batch ID generation (`uuid`/`random`) for downloaded files to prevent race conditions when users send multiple links simultaneously.
